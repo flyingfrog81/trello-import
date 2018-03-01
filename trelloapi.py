@@ -79,14 +79,20 @@ def create_list(trello_board, list_name):
                                         idBoard=trello_board['id'])
     return list_reply.json()
 
-def get_or_create_list(trello_board, list_name):
+def get_board_list_by_name(trello_board, list_name):
     trello_lists = get_board_lists(trello_board)
     trello_list = [_l for _l in trello_lists if _l['name'] == list_name]
     if not trello_list:
-        create_list(trello_board, list_name)
+        return None
     else:
         trello_list = trello_list[0]
         logging.debug("found trello list {}".format(list_name))
+    return trello_list
+
+def get_or_create_list(trello_board, list_name):
+    trello_list = get_board_list_by_name(trello_board, list_name)
+    if not trello_list:
+        trello_list = create_list(trello_board, list_name)
     return trello_list
 
 def create_label(trello_board, label_name, label_color="none"):
@@ -118,4 +124,9 @@ def create_attachment(trello_card, attachment_name, attachment_url):
 def delete_card(trello_card):
         logging.debug("deleting trello card: {}".format(trello_card['name']))
         reply = trello_delete("/cards/" + trello_card['id'])
+        return reply
+
+def delete_label(trello_label):
+        logging.debug("deleting trello label: {}".format(trello_label['name']))
+        reply = trello_delete("/labels/" + trello_label['id'])
         return reply

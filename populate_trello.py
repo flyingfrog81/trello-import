@@ -5,17 +5,7 @@ import sys
 
 import trelloapi
 import jira_import
-
-# COSTANTS
-jira_export_filename = "data/backlog.csv"
-jira_base_url = "https://jira.skatelescope.org/browse/"
-board_name = "PI planning"
-epics_list_name = "epics"
-backlog_list_name = "backlog"
-label_colors = ['yellow', 'purple', 'blue', 'red', 'green', 'orange',
-                'black', 'sky', 'pink', 'lime']
-# cycling iterator over available colors
-color = itertools.cycle(label_colors)
+from constants import *
 
 # import jira issues
 jira_epics, jira_issues = jira_import.read_jira_issues(jira_export_filename,
@@ -50,6 +40,12 @@ board_labels = trelloapi.get_board_labels(trello_board)
 board_labels_dict = {}
 for label in board_labels:
     board_labels_dict[label['name']] = label
+for sp in story_points:
+    if not sp in board_labels_dict.keys():
+        board_labels_dict[sp] = trelloapi.create_label(trello_board,
+                                                       sp,
+                                                       story_points_color)
+
 
 # Update trello epics and labels to match jira export
 for epic_id, (epic_summary, epic_name, epic_link) in jira_epics.items():
@@ -80,7 +76,7 @@ backlog_trello_list = trelloapi.get_or_create_list(trello_board,
 
 
 # Update trello cards to match jira export
-for issue_id, (issue_summary, epic_id, issue_link) in jira_issues.items():
+for issue_id, (issue_summary, epic_id, issue_link, issue_story_points) in jira_issues.items():
     issue_card = board_cards_dict.pop(issue_summary, None)
     if not issue_card:
         if epic_id:
@@ -91,14 +87,19 @@ for issue_id, (issue_summary, epic_id, issue_link) in jira_issues.items():
                 board_label_id = []
         else:
             board_label_id = []
+        if issue_story_points:
+            try:
+                board_label_id.append(board_labels_dict[issue_story_points]['id'])
+            except:
+                pass
         issue_card = trelloapi.create_card(backlog_trello_list,
                                            issue_summary,
-                                            board_label_id)
+                                           ",".join(board_label_id))
         # link the newly created epic with the corresponding jira issue
         attachment = trelloapi.create_attachment(issue_card,
                                                  issue_link,
                                                  issue_link)
 
 # Remove pending cards from trello board
-for card in board_cards_dict.values():
-    trelloapi.delete_card(card)
+#for card in board_cards_dict.values():
+#    trelloapi.delete_card(card)
