@@ -52,6 +52,7 @@ for epic_id, (epic_summary, epic_name, epic_link) in jira_epics.items():
     # update labels with epic name
     board_label = board_labels_dict.get(epic_name)
     if not board_label:
+        logging.info("adding board label: {}".format(epic_name))
         board_label = trelloapi.create_label(trello_board,
                                               epic_name,
                                               next(color))
@@ -60,6 +61,7 @@ for epic_id, (epic_summary, epic_name, epic_link) in jira_epics.items():
     # update epics trello list with jira epic
     epic_card = epics_cards_dict.pop(epic_name, None)
     if not epic_card:
+        logging.info("adding epic card: {}".format(epic_name))
         epic_card = trelloapi.create_card(epics_trello_list,
                                           epic_name,
                                           [board_label['id']])
@@ -70,7 +72,7 @@ for epic_id, (epic_summary, epic_name, epic_link) in jira_epics.items():
     else:
         board_cards_dict.pop(epic_name)
 
-# search for epics list in trello board
+# search for backlog list in trello board
 backlog_trello_list = trelloapi.get_or_create_list(trello_board,
                                                    backlog_list_name)
 
@@ -92,6 +94,8 @@ for issue_id, (issue_summary, epic_id, issue_link, issue_story_points) in jira_i
                 board_label_id.append(board_labels_dict[issue_story_points]['id'])
             except:
                 pass
+        logging.info("adding card: {}\nlabels: {}".format(issue_summary,
+                     ",".join(board_label_id)))
         issue_card = trelloapi.create_card(backlog_trello_list,
                                            issue_summary,
                                            ",".join(board_label_id))

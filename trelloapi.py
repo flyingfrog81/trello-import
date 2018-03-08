@@ -39,9 +39,9 @@ def get_board_by_name(board_name):
         return None
     return board[0]
 
-def get_board_lists(board):
+def get_board_lists(board, trello_filter="open"):
     lists_suffix = "boards/" + board['id'] + "/lists"
-    lists = trello_get(lists_suffix)
+    lists = trello_get(lists_suffix, filter=trello_filter)
     if not lists.ok:
         return None
     return lists.json()
@@ -74,9 +74,9 @@ def get_card_attachments(card):
 
 def create_list(trello_board, list_name):
     logging.debug("creating trello list: {}".format(list_name))
-    list_reply  = trelloreq.trello_post("lists",
-                                        name=list_name,
-                                        idBoard=trello_board['id'])
+    list_reply  = trello_post("lists",
+                              name=list_name,
+                              idBoard=trello_board['id'])
     return list_reply.json()
 
 def get_board_list_by_name(trello_board, list_name):
